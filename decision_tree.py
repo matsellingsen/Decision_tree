@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
-import sys
 
  # https://www.geeksforgeeks.org/decision-tree/ <-- good overview-explanation
+
+ #TODO 
  # 1. create train (STRUCTURE has been SET UP; NEED TO FIX BUGS)
     # 1. calc expected entropy for each attribute (DONE(?))<-- Validate correctness here somehow
     # 2. split on min.val^, i.e. create children nodes with belonging data for each value of the split-attribute. (DONE)
@@ -22,20 +23,15 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
 
     def train(self, node=None):
 
-        if node is None:
+        if node is None: 
             node = self.root
         def select_split_attribute():
-            def expected_entropy(attribute, attr_name): #<-- attribute is a pandas column with 
-
-                total_examples = len(attribute)
+            def expected_entropy(attribute: pd.DataFrame , attr_name: str): #<-- attribute is a pandas column 
+                
+                total_examples = len(attribute)  
                 unique_values = pd.unique(attribute[attr_name])
                 value_counts =  pd.value_counts(attribute[attr_name])
                 unique_labels = pd.unique(attribute[self.label])
-                #print(attribute.head())
-                #print("len: ", total_examples)
-                #print("unique_vals: ", unique_values)
-                #print("unique_labels: ", unique_labels)
-                #print("Attr: ", attr_name )
              
                 probs = list(map(lambda x: np.multiply(-sum(
                                                             list(map(lambda y: np.multiply(
@@ -46,19 +42,15 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
                                                         ),
                             unique_values))
                
-                # ^ Is an attempt at calculating probability (H^i) for every value of the given attribute. See lecture on trees in Methods in AI.
-                #print("probs: ", probs)
+                # ^ Calculating probability (H^i) for every value of the given attribute. (Note to self: See lecture on trees in Methods in AI)
                 return sum(probs) #<-- expected entropy
 
 
-            exp_entropy_attributes = list(map(lambda x: (expected_entropy(node.data[[x, self.label]], x), x), node.data.drop(columns=[self.label]).columns))
-            #print("exp_entropy_attributes: ", exp_entropy_attributes)
-            split_attribute = min(exp_entropy_attributes, key = lambda x: x[0])
-            return split_attribute[1]
+            exp_entropy_attributes = list(map(lambda x: (expected_entropy(node.data[[x, self.label]], x), x), node.data.drop(columns=[self.label]).columns)) #<-- Calculating expected entropy for all attributes.
+            split_attribute = min(exp_entropy_attributes, key = lambda x: x[0]) #<-- Finding attribute to split/branch, attribute with smallest expected entropy is selected.
+            return split_attribute[1] #<-- Selected split attribute.
 
-        if node.is_leaf:
-            #print("BRANCH IS FINISHED")
-            #print(node.attribute_value)
+        if node.is_leaf: #<-- we have reached an end of the tree
             return 
         
         split_attribute = select_split_attribute()
@@ -73,25 +65,24 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
             node.children.append(new_node)
 
     
-    def classify(self, instance):
+    def classify(self, instance: pd.DataFrame):
         current_node = self.root
-        print("I: ", self.test_x.iloc[0])
-        print("Split: ", current_node.split_attribute)
 
         def walk_tree(node: Node):
             if node.is_leaf:
                 return node.label
-            
             next_node = next(node for node in node.children if node.attribute_value == instance[node.split_attribute])
             walk_tree(next_node)
 
 
-            
+        """Intuitive explanation of what classify() does."""
         # Look at current node
         #   Find correct class
         # Update current node to leaf-node with correct class
         # If node== leaf, return majority class as answer
         # else: repeat  
+        """"""
+
         return walk_tree(current_node)
              
         
@@ -99,7 +90,7 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
         "placeholder"
 
 
-  
+ 
 class Node:  
     def __init__(self, data, label_name, max_depth, depth, split_attribute=None, attribute_value = None, parent=None):
         self.label = label_name
@@ -111,10 +102,9 @@ class Node:
         self.depth = depth
         self.split_attribute = split_attribute
         
-        if len(pd.unique(data[self.label])) == 1 or self.max_depth == depth or len(data.columns) == 2:
+        if len(pd.unique(data[self.label])) == 1 or self.max_depth == depth or len(data.columns) == 2: #<-- Checking if node is a leaf-node.
             self.is_leaf = True
-        else: 
-            
+        else:    
             self.is_leaf = False
 
 
