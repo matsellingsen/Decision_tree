@@ -4,13 +4,14 @@ import pandas as pd
  # https://www.geeksforgeeks.org/decision-tree/ <-- good overview-explanation
 
  #TODO 
- # 1. create train (STRUCTURE has been SET UP; NEED TO FIX BUGS)
+ # 1. create train (DONE)
     # 1. calc expected entropy for each attribute (DONE(?))<-- Validate correctness here somehow
     # 2. split on min.val^, i.e. create children nodes with belonging data for each value of the split-attribute. (DONE)
     # 3. repeat until children node is leaf node, i.e. all data has same class or max depth is reached. (DONE)
-# 2. create classify() #<-- Implemented, not tested.
-# 3. create test()
-# 4. visualize graph (add node.depth to simplify this)
+# 2. create classify() (DONE)
+# 3. create test() (DONE) #<-- see TODO in test() for further optional work.
+# 4. create predict() (DONE)
+# 5. visualize graph (added node.depth to simplify this)
 
 
 
@@ -23,7 +24,6 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
         self.root = Node(tr, label_name, max_depth,  0)         
 
     def train(self, node=None):
-
         if node is None: 
             node = self.root
         def select_split_attribute():
@@ -33,8 +33,9 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
                 unique_values = pd.unique(attribute[attr_name])
                 value_counts =  pd.value_counts(attribute[attr_name])
                 unique_labels = pd.unique(attribute[self.label])
-             
-                probs = list(map(lambda x: np.multiply(-sum(
+
+                # Using indentation below for readability reasons. 
+                probs = list(map(lambda x: np.multiply(-sum( 
                                                             list(map(lambda y: np.multiply(
                                                                                         (np.divide(len(attribute.loc[(attribute[attr_name]==x) & (attribute[self.label]==y)]), value_counts[x])),
                                                                                          np.log2(np.divide(len(attribute.loc[(attribute[attr_name]==x) & (attribute[self.label]==y)]), value_counts[x]), where= np.divide(len(attribute.loc[(attribute[attr_name]==x) & (attribute[self.label]==y)]), value_counts[x])!=0)),
@@ -46,7 +47,6 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
                 # ^ Calculating probability (H^i) for every value of the given attribute. (Note to self: See lecture on trees in Methods in AI)
                 return sum(probs) #<-- expected entropy
 
-
             exp_entropy_attributes = list(map(lambda x: (expected_entropy(node.data[[x, self.label]], x), x), node.data.drop(columns=[self.label]).columns)) #<-- Calculating expected entropy for all attributes.
             split_attribute = min(exp_entropy_attributes, key = lambda x: x[0]) #<-- Finding attribute to split/branch, attribute with smallest expected entropy is selected.
             return split_attribute[1] #<-- Selected split attribute.
@@ -54,7 +54,7 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
         if node.is_leaf: #<-- we have reached an end of the tree
             return 
         
-        split_attribute = select_split_attribute()
+        split_attribute = select_split_attribute() #<-- calculating what split attribute will be for current node. 
         
         node.split_attribute = split_attribute
         groups = node.data.groupby([split_attribute])
@@ -86,8 +86,8 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
             return walk_tree(next_node)
         return walk_tree(current_node)
 
-    def predict(self, data):        
-        pass
+    def predict(self, data: pd.DataFrame):     
+        return np.array(list(map(lambda i: self.classify(data.iloc[i]), np.arange(len(data)))))
 
     def test(self, te = None):
         if te == None:
@@ -101,6 +101,8 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
             if i==j:
                 correct += 1
         print("accuracy: ",correct / len(ground_truth))
+        #TODO 
+        # add precision, recall and f1 metrics.
         
 
 class Node:  
