@@ -80,7 +80,6 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
             if node.is_leaf:
                 return node.decision    
             next_node = next((n for n in node.children if n.attribute_value == instance[node.split_attribute]), node.data[self.label].value_counts().idxmax()) #<-- default = majority label value of data in current node.
-            print(next_node)
             if isinstance(next_node, np.int64): #<-- Can happen if no part of the training-subset has the same value attribute as instance. (see how tree is branched out)
                 return next_node
                 
@@ -103,7 +102,6 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
                 correct += 1
         print("accuracy: ",correct / len(ground_truth))
         
-
 
 class Node:  
     def __init__(self, data, label_name, max_depth, depth, split_attribute=None, attribute_value = None, parent=None):
