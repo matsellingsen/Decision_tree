@@ -10,6 +10,7 @@ import pandas as pd
     # 3. repeat until children node is leaf node, i.e. all data has same class or max depth is reached. (DONE)
 # 2. create classify() #<-- Implemented, not tested.
 # 3. create test()
+# 4. visualize graph (add node.depth to simplify this)
 
 
 
@@ -54,6 +55,7 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
             return 
         
         split_attribute = select_split_attribute()
+        
         node.split_attribute = split_attribute
         groups = node.data.groupby([split_attribute])
         
@@ -64,33 +66,45 @@ class Decision_tree: # Using ID3-algorithm to calcualte splitting
             self.train(new_node)
             node.children.append(new_node)
 
-    
+
+    """Intuitive explanation of what classify() does."""
+    # Look at current node
+    #   Find correct class
+    # Update current node to leaf-node with correct class
+    # If node == leaf, return majority class as answer
+    # else: repeat  
+    """"""
     def classify(self, instance: pd.DataFrame):
         current_node = self.root
-
         def walk_tree(node: Node):
             if node.is_leaf:
-                return node.label
-            next_node = next(node for node in node.children if node.attribute_value == instance[node.split_attribute])
-            walk_tree(next_node)
-
-
-        """Intuitive explanation of what classify() does."""
-        # Look at current node
-        #   Find correct class
-        # Update current node to leaf-node with correct class
-        # If node== leaf, return majority class as answer
-        # else: repeat  
-        """"""
-
+                return node.decision    
+            next_node = next((n for n in node.children if n.attribute_value == instance[node.split_attribute]), node.data[self.label].value_counts().idxmax()) #<-- default = majority label value of data in current node.
+            print(next_node)
+            if isinstance(next_node, np.int64): #<-- Can happen if no part of the training-subset has the same value attribute as instance. (see how tree is branched out)
+                return next_node
+                
+            return walk_tree(next_node)
         return walk_tree(current_node)
-             
+
+    def predict(self, data):        
+        pass
+
+    def test(self, te = None):
+        if te == None:
+            te = self.test_x
+        indexes = np.arange(len(te))
+        preds = list(map(lambda i: self.classify(te.iloc[i]), indexes))
+
+        ground_truth = te["Survived"].values.tolist()
+        correct = 0
+        for i, j in zip(preds, ground_truth):
+            if i==j:
+                correct += 1
+        print("accuracy: ",correct / len(ground_truth))
         
-    def test(self):
-        "placeholder"
 
 
- 
 class Node:  
     def __init__(self, data, label_name, max_depth, depth, split_attribute=None, attribute_value = None, parent=None):
         self.label = label_name
@@ -103,6 +117,7 @@ class Node:
         self.split_attribute = split_attribute
         
         if len(pd.unique(data[self.label])) == 1 or self.max_depth == depth or len(data.columns) == 2: #<-- Checking if node is a leaf-node.
+            self.decision = data[self.label].value_counts().idxmax() #<-- Decision label, either 0 or 1.
             self.is_leaf = True
         else:    
             self.is_leaf = False
